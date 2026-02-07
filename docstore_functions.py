@@ -1,3 +1,4 @@
+from __future__ import annotations
 import langchain_core
 from langchain_community.vectorstores import FAISS
 from langchain_community.docstore.in_memory import InMemoryDocstore
@@ -14,8 +15,7 @@ from langchain_community.document_loaders import (
 from sentence_transformers import SentenceTransformer
 
 import os
-from typing import List, Union, Optional
-from __future__ import annotations
+from typing import List, Union, Optional, Dict, Any
 import hashlib
 
 def scan_directory(directory_path: str):
@@ -68,7 +68,8 @@ class SentenceTransformerEmbeddingsWrapper:
         if isinstance(texts, (list, tuple)):
             return self.embed_documents(list(texts))
         raise TypeError(f"Unsupported input type for embeddings: {type(texts)}")
-    
+
+
 def create_faiss_store_from_documents(documents: List[Document], index_dir: str = "vectorstore", embedding_model: str = "BAAI/bge-small-en-v1.5"):
     """
     Build a FAISS vectorstore from a list of langchain Document objects and save it to disk.
@@ -82,6 +83,7 @@ def create_faiss_store_from_documents(documents: List[Document], index_dir: str 
     store.save_local(index_dir)
     return store
 
+
 def load_faiss_store(index_dir: str = "vectorstore", embedding_model: str = "all-MiniLM-L6-v2"):
     """
     Load a previously saved FAISS vectorstore from disk.
@@ -89,6 +91,7 @@ def load_faiss_store(index_dir: str = "vectorstore", embedding_model: str = "all
     embeddings = SentenceTransformerEmbeddingsWrapper(embedding_model)
     # FAISS.load_local expects an embeddings object providing `embed_documents`
     return FAISS.load_local(index_dir, embeddings)
+
 
 def add_documents_and_save(store: FAISS, new_documents: List[Document], index_dir: str = "vectorstore"):
     """
@@ -237,6 +240,7 @@ def path_upload_document_to_vectorstore(
     print(f"Done. Added: {total_added}, skipped as duplicates: {total_skipped}.")
     return store
 
+
 def load_docstore_from_dir(index_dir: str = "vectorstore", embedding_model: str = "BAAI/bge-small-en-v1.5"):
     """
     Load a FAISS-backed docstore from disk and return (store, documents_list).
@@ -255,11 +259,6 @@ def load_docstore_from_dir(index_dir: str = "vectorstore", embedding_model: str 
 
     print(f"Loaded FAISS store from '{index_dir}' with {len(docs)} document(s).")
     return store, docs
-
-from typing import List, Dict, Any
-from langchain_community.vectorstores import FAISS
-
-
 
 
 def retrieve_local(store: FAISS, query: str, k: int = 6) -> List[Dict[str, Any]]:
