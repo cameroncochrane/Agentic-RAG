@@ -69,7 +69,6 @@ class SentenceTransformerEmbeddingsWrapper:
             return self.embed_documents(list(texts))
         raise TypeError(f"Unsupported input type for embeddings: {type(texts)}")
 
-
 def create_faiss_store_from_documents(documents: List[Document], index_dir: str = "vectorstore", embedding_model: str = "BAAI/bge-small-en-v1.5"):
     """
     Build a FAISS vectorstore from a list of langchain Document objects and save it to disk.
@@ -82,25 +81,6 @@ def create_faiss_store_from_documents(documents: List[Document], index_dir: str 
     store = FAISS.from_documents(documents, embeddings)
     store.save_local(index_dir)
     return store
-
-
-def load_faiss_store(index_dir: str = "vectorstore", embedding_model: str = "all-MiniLM-L6-v2"):
-    """
-    Load a previously saved FAISS vectorstore from disk.
-    """
-    embeddings = SentenceTransformerEmbeddingsWrapper(embedding_model)
-    # FAISS.load_local expects an embeddings object providing `embed_documents`
-    return FAISS.load_local(index_dir, embeddings)
-
-
-def add_documents_and_save(store: FAISS, new_documents: List[Document], index_dir: str = "vectorstore"):
-    """
-    Add documents to an existing FAISS store and persist to disk.
-    """
-    store.add_documents(new_documents)
-    store.save_local(index_dir)
-    return store
-
 
 def path_upload_document_to_vectorstore(
     document_paths: Union[str, List[str]],
@@ -240,7 +220,6 @@ def path_upload_document_to_vectorstore(
     print(f"Done. Added: {total_added}, skipped as duplicates: {total_skipped}.")
     return store
 
-
 def load_docstore_from_dir(index_dir: str = "vectorstore", embedding_model: str = "BAAI/bge-small-en-v1.5"):
     """
     Load a FAISS-backed docstore from disk and return (store, documents_list).
@@ -259,7 +238,6 @@ def load_docstore_from_dir(index_dir: str = "vectorstore", embedding_model: str 
 
     print(f"Loaded FAISS store from '{index_dir}' with {len(docs)} document(s).")
     return store, docs
-
 
 def retrieve_local(store: FAISS, query: str, k: int = 6) -> List[Dict[str, Any]]:
     """
