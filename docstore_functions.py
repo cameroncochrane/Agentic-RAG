@@ -278,3 +278,4 @@ def retrieve_local(store: FAISS, query: str, k: int = 6) -> List[Dict[str, Any]]
             "content_hash": d.metadata.get("content_hash", None),
         })
     return out
+
