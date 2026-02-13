@@ -1,15 +1,18 @@
-"""Streamlit frontend for the agentic RAG crew."""
 import streamlit as st
 import os
 
+# Disable CrewAI / OTEL telemetry before importing `crewai` so it doesn't
+# attempt to register signal handlers during import (Streamlit runs code
+# in worker threads which can't register signals).
 os.environ.setdefault("CREWAI_DISABLE_TELEMETRY", "true")
 os.environ.setdefault("OTEL_SDK_DISABLED", "true")
 os.environ.setdefault("CREWAI_DISABLE_TRACKING", "true")
 
+import crewai
+
 from pathlib import Path
 from typing import Any, Dict
 from crewai import Agent, Task, Crew, Process, LLM
-
 
 from docstore_functions import load_docstore_from_dir
 from load_keys import *
@@ -20,7 +23,6 @@ from llm_and_crew_functions import (
 	load_llm,
 )
 
-
 DEFAULT_MODEL = "groq/openai/gpt-oss-120b"
 DEFAULT_GROQ_KEY_PATH = "keys/groq.json"
 DEFAULT_TAVILY_KEY_PATH = "keys/tavily.json"
@@ -29,7 +31,7 @@ DEFAULT_INDEX_DIR = "vectorstore"
 
 
 st.set_page_config(
-	page_title="Agentic RAG Playground",
+	page_title="Agentic RAG App",
 	page_icon="AI",
 	layout="wide",
 )
@@ -45,19 +47,21 @@ def bootstrap_resources(
 	
 	"""Load the LLM, FAISS store, tools, and Crew exactly once per session."""
 	
+	# Load all the APIs + tools (and set their respective API keys):
 	groq_api_key = load_groq_key(Path(groq_key_path))
 	os.environ['GROQ_API_KEY'] = groq_api_key
 
 	llm_for_crew = LLM(model="groq/openai/gpt-oss-120b", api_key=os.environ["GROQ_API_KEY"], temperature=0.2)
 
 	store, docs = load_docstore_from_dir(index_dir=index_dir)
-
 	local_tool = LocalFAISSSearchTool(store=store)
+
 	tavily_api_key = load_tavily_key(Path(tavily_key_path))
 	openai_api_key = load_openai_key(Path(openai_key_path))
 	os.environ['OPENAI_API_KEY'] = openai_api_key
 	web_tool = TavilyWebSearchTool(api_key=tavily_api_key)
 
+	# 'Load' crew ready for use:
 	crew = build_crew(llm=llm_for_crew, local_tool=local_tool, web_tool=web_tool)
 
 	return {
@@ -102,34 +106,37 @@ def main() -> None:
 
 	st.title("Agentic RAG Crew")
 	st.write(
-		"Ask a question and let the CrewAI pipeline orchestrate local FAISS retrieval and Tavily web search when needed."
+		"Ask a question"
 	)
 
-	with st.sidebar:
-		st.subheader("System Status")
-		st.metric("Indexed chunks", resources["doc_count"])
-		st.caption(
-			f"Model: {resources['model']}\nFAISS index: {resources['index_dir']}"
-		)
-		if st.button("Reload resources"):
-			bootstrap_resources.clear()
-			st.experimental_rerun()
+	# Sidebar to show how many docs in FAISS are loaded
+	#
+	# with st.sidebar:
+	#	st.subheader("System Status")
+	#	st.metric("Indexed chunks", resources["doc_count"])
+	#	st.caption(
+	#		f"Model: {resources['model']}\nFAISS index: {resources['index_dir']}"
+	#	)
+	#	if st.button("Reload resources"):
+	#		bootstrap_resources.clear()
+	#		st.experimental_rerun()
 
+	# Allows for the shwoing of question history:
 	if "exchanges" not in st.session_state:
 		st.session_state["exchanges"] = []
 
 	query = st.text_area(
 		"Your question",
-		placeholder="e.g. Summarize the onboarding docs and mention any missing policies.",
+		placeholder="e.g. List some common reactions in natural product synthesis",
 		height=120,
 	)
-	run_button = st.button("Run Agent Crew", type="primary", use_container_width=True)
+	run_button = st.button("Retrieve answer", type="primary", use_container_width=True)
 
 	if run_button:
 		if not query.strip():
-			st.warning("Please enter a question before running the crew.")
+			st.warning("Please enter a question before running.")
 		else:
-			with st.spinner("Agent crew working..."):
+			with st.spinner("Retrieving answer..."):
 				try:
 					crew_output = resources["crew"].kickoff(inputs={"query": query.strip()})
 					final_answer = format_crew_output(crew_output)

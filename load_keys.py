@@ -1,5 +1,4 @@
 import json
-import os
 from pathlib import Path
 
 def load_groq_key(json_path):
@@ -21,15 +20,15 @@ def load_groq_key(json_path):
         json.JSONDecodeError: If the file content is not valid JSON.
     """
 
-    p = json_path
+    p = Path(json_path)
 
     if not p.exists():
-        raise FileNotFoundError("{p} not found")
+        raise FileNotFoundError(f"{p} not found")
 
     data = json.loads(p.read_text())
     groq_api_key = data.get("api_key") or data.get("groq_api_key") or data.get("key") or data.get("token")
     if not groq_api_key:
-        raise KeyError("No Groq API key found in {p} (expected 'api_key' or 'groq_api_key')")
+        raise KeyError(f"No Groq API key found in {p} (expected 'api_key' or 'groq_api_key')")
     
     groq_api_key = str(groq_api_key)
 
@@ -54,15 +53,15 @@ def load_openai_key(json_path):
         json.JSONDecodeError: If the file content is not valid JSON.
     """
 
-    p = json_path
+    p = Path(json_path)
 
     if not p.exists():
-        raise FileNotFoundError("{p} not found")
+        raise FileNotFoundError(f"{p} not found")
 
     data = json.loads(p.read_text())
     openai_api_key = data.get("api_key") or data.get("openai_api_key") or data.get("key") or data.get("token")
     if not openai_api_key:
-        raise KeyError("No OpenAI API key found in {p} (expected 'api_key' or 'openai_api_key')")
+        raise KeyError(f"No OpenAI API key found in {p} (expected 'api_key' or 'openai_api_key')")
     
     openai_api_key = str(openai_api_key)
 
@@ -87,15 +86,15 @@ def load_tavily_key(json_path):
         json.JSONDecodeError: If the file content is not valid JSON.
     """
 
-    p = json_path
+    p = Path(json_path)
 
     if not p.exists():
-        raise FileNotFoundError("{p} not found")
+        raise FileNotFoundError(f"{p} not found")
 
     data = json.loads(p.read_text())
     tavily_api_key = data.get("api_key") or data.get("tavily_api_key") or data.get("key") or data.get("token")
     if not tavily_api_key:
-        raise KeyError("No tavily API key found in {p} (expected 'api_key' or 'tavily_api_key')")
+        raise KeyError(f"No tavily API key found in {p} (expected 'api_key' or 'tavily_api_key')")
     
     tavily_api_key = str(tavily_api_key)
 
